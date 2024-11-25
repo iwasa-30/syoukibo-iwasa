@@ -1,0 +1,37 @@
+name: 'Terraform'
+
+on:
+  workflow_dispatch:  # 手動トリガーを追加
+
+permissions:
+  id-token: write
+  contents: read # actions/checkout のために必要
+
+jobs:
+  get-caller-identity:
+    name: OIDC Terraform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials from Terraform account
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-northeast-1
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.9.6
+
+      - name: Terraform Init
+        id: init
+        working-directory: env/dev
+        run: terraform init    
+
+      - name: Terraform Destroy
+        id: destroy
+        working-directory: env/dev
+        run: terraform destroy -auto-approve
